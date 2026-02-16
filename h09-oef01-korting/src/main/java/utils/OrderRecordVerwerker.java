@@ -1,7 +1,8 @@
 package utils;
 
-import java.net.URISyntaxException;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class OrderRecordVerwerker {
@@ -12,22 +13,30 @@ public class OrderRecordVerwerker {
         // TODO
     }
 
-    // Voor INPUT (moet bestaan)
-    private static Path geefInputPad(String bestandsnaam) {
+    // INPUT: Moet een bestaand bestand in target zijn
+    private Path geefInputPad(String bestandsnaam) {
         URL url = OrderRecordVerwerker.class.getResource("/bestanden/" + bestandsnaam);
-        if (url == null) exitApplication("Input mist: " + bestandsnaam);
+        if (url == null) {
+            exitApplication("Bestand niet gevonden: bestanden/" + bestandsnaam);
+        }
         try {
             return Path.of(url.toURI());
-        } catch (URISyntaxException e) {
-            exitApplication(String.format("Kan bestand %s niet maken", bestandsnaam));
+        } catch (Exception e) {
+            exitApplication("Kan bestand niet openen: " + bestandsnaam);
+            throw new IllegalStateException(e);
         }
-        return null;
     }
 
-    // Voor OUTPUT (mag nieuw zijn)
-    private static Path geefOutputPad(String bestandsnaam) {
+    // OUTPUT: Schrijven naar een bestand in target (mag nieuw zijn)
+    private Path geefOutputPad(String bestandsnaam) {
         Path pad = Path.of("target", "classes", "bestanden", bestandsnaam);
-        return pad;
+        try {
+            Files.createDirectories(pad.getParent());
+            return pad;
+        } catch (IOException e) {
+            exitApplication("Kan map niet maken voor: " + bestandsnaam);
+            throw new IllegalStateException(e);
+        }
     }
 
     private static void exitApplication(String message) {
